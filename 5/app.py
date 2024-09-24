@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from scipy.linalg import eigh 
 
-d0 = pd.read_csv('mnist_train.csv')
+d0 = pd.read_csv('C:/Users/Victo/Desktop/open-cv-projects/5/mnist_train.csv')
 
 print(d0.head(5)) # print first five rows of d0.
 
@@ -58,7 +58,7 @@ def label():
     # the parameter 'eigvals' is defined (low value to heigh value). 
     # eigh function will return the eigen values in asending order.
     # this code generates only the top 2 (782 and 783) eigenvalues.
-    values, vectors = eigh(covar_matrix, eigvals=(782,783))
+    values, vectors = eigh(covar_matrix, subset_by_index=[782, 783])
 
     print("Shape of eigen vectors = ",vectors.shape)
     # converting the eigen vectors into (2,d) shape for easyness of further computations.

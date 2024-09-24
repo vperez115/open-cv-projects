@@ -6,7 +6,7 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
 # Load an image
-image = cv2.imread('Human_faces.jpg')  # Replace with your image path
+image = cv2.imread('C:/Users/Victo/Desktop/open-cv-projects/1/Human_faces.jpg')
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 # Detect faces in the image

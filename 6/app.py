@@ -33,7 +33,7 @@ def predict_image(file_path):
     return decoded_predictions
 
 # Replace 'path_to_your_image.jpg' with the path to the image you want to use
-file_path = 'DSC00712-1560x1075.jpg'
+file_path = 'C:/Users/Victo/Desktop/open-cv-projects/6/DSC00712-1560x1075.jpg'
 predictions = predict_image(file_path)
 
 # Print out the predictions
