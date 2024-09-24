@@ -31,7 +31,7 @@ def main():
     image_array = np.asarray(bytearray(image_bytes.read()), dtype=np.uint8)
     sample_texture = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
-    patch_size = 50  # Size of each patch
+    patch_size = 20  # Size of each patch
     new_width, new_height = 640, 480  # Size of the new texture
     synthesized_texture = create_texture_from_patches(sample_texture, patch_size, new_width, new_height)
 
