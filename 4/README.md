@@ -1,0 +1,1 @@
+4. **Pattern and Texture Synthesis Project:** In this project, students will experiment with creating unique patterns or textures using image transformations and blending techniques. It focuses on advanced image processing skills like texture synthesis and pattern generation.

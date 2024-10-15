@@ -1,0 +1,2 @@
+7. **RNN (Recurrent Neural Networks) Project:**
+Recurrent Neural Networks (RNN): Create a Python project that uses RNNs to analyze time-series data, such as predicting stock prices or generating text sequences based on input patterns.
