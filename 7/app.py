@@ -8,8 +8,15 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 import pickle
 import os
-import sys
 from tkinter import Tk, filedialog
+from tensorflow.keras.mixed_precision import set_global_policy
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.mixed_precision import LossScaleOptimizer
+
+# Enable mixed precision globally
+set_global_policy('mixed_float16')
+tf.config.experimental.enable_tensor_float_32_execution(False)
+
 
 # Global Variables
 MAX_WORDS = 10000  # Maximum number of words to keep based on frequency
@@ -61,8 +68,14 @@ def create_model(num_classes=1):
         Dense(num_classes, activation='sigmoid' if num_classes == 1 else 'softmax')
     ])
 
-    model.compile(optimizer='adam', loss='binary_crossentropy' if num_classes == 1 else 'categorical_crossentropy',
+    # Use mixed precision compatible optimizer with loss scaling
+    opt = Adam(learning_rate=0.001)
+    opt = LossScaleOptimizer(opt)
+    
+    model.compile(optimizer=opt, 
+                  loss='binary_crossentropy' if num_classes == 1 else 'categorical_crossentropy',
                   metrics=['accuracy'])
+    
     return model
 
 def train_model():
@@ -79,18 +92,16 @@ def train_model():
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, random_state=42)
 
-    strategy = tf.distribute.MirroredStrategy()
-    with strategy.scope():
-        model = create_model()
-        print("Training the model...")
+    model = create_model()
+    print("Training the model...")
 
-        model.fit(
-            X_train, y_train,
-            validation_data=(X_val, y_val),
-            epochs=5,
-            batch_size=256,
-            verbose=1
-        )
+    model.fit(
+        X_train, y_train,
+        validation_data=(X_val, y_val),
+        epochs=5,
+        batch_size=256,
+        verbose=1
+    )
 
     model.save(MODEL_PATH)
     print(f"Model saved at {MODEL_PATH}")
@@ -119,32 +130,46 @@ def test_model():
     """Test the trained model on a new dataset or single input."""
     model, tokenizer = load_or_train_model()
 
-    choice = input("Do you want to test with a file? (yes/no): ").strip().lower()
-    if choice == 'yes':
-        file_path = open_file_dialog()
-        if not file_path or not os.path.exists(file_path):
-            print("File not found or no file selected.")
-            return
+    while True:
+        choice = input("Do you want to test with a file? (yes/no): ").strip().lower()
+        
+        if choice == 'yes':
+            file_path = open_file_dialog()
+            if not file_path or not os.path.exists(file_path):
+                print("File not found or no file selected.")
+                continue  # Go back to the main loop and allow the user to choose again
 
-        df = pd.read_csv(file_path, encoding='ISO-8859-1', header=None)
-        df.columns = ['target', 'ids', 'date', 'flag', 'user', 'text']
-        texts = df['text'].astype(str).values
+            df = pd.read_csv(file_path, encoding='ISO-8859-1', header=None)
+            df.columns = ['target', 'ids', 'date', 'flag', 'user', 'text']
+            texts = df['text'].astype(str).values
 
-        sequences = tokenizer.texts_to_sequences(texts)
-        padded_sequences = pad_sequences(sequences, maxlen=MAX_LEN, padding='post', truncating='post')
+            sequences = tokenizer.texts_to_sequences(texts)
+            padded_sequences = pad_sequences(sequences, maxlen=MAX_LEN, padding='post', truncating='post')
 
-        predictions = model.predict(padded_sequences)
-        df['predicted_sentiment'] = (predictions > 0.5).astype(int)
+            predictions = model.predict(padded_sequences)
+            df['predicted_sentiment'] = (predictions > 0.5).astype(int)
 
-        print(df[['text', 'predicted_sentiment']].head())
-    else:
-        review = input("Enter a review to test: ")
-        sequence = tokenizer.texts_to_sequences([review])
-        padded_sequence = pad_sequences(sequence, maxlen=MAX_LEN, padding='post', truncating='post')
+            print(df[['text', 'predicted_sentiment']].head())
 
-        prediction = model.predict(padded_sequence)[0][0]
-        sentiment = "Positive" if prediction > 0.5 else "Negative"
-        print(f"Predicted Sentiment: {sentiment} with confidence {prediction:.2f}")
+        else:
+            while True:
+                review = input("Enter a review to test (or type 'exit' to stop): ").strip()
+                if review.lower() == 'exit':
+                    print("Exiting review testing...")
+                    return  # Exit the function and stop testing
+
+                sequence = tokenizer.texts_to_sequences([review])
+                padded_sequence = pad_sequences(sequence, maxlen=MAX_LEN, padding='post', truncating='post')
+
+                prediction = model.predict(padded_sequence)[0][0]
+                sentiment = "Positive" if prediction > 0.5 else "Negative"
+                print(f"Predicted Sentiment: {sentiment} with confidence {prediction:.2f}")
+
+                another_review = input("Do you want to test another review? (yes/no): ").strip().lower()
+                if another_review != 'yes':
+                    print("Stopping individual review testing...")
+                    return  # Exit the function if the user does not want to test another review
+
 
 def main():
     """Main function to run the program."""
